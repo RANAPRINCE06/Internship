@@ -50,8 +50,10 @@ export default function Translator({
     swap,
     translate
   } = useTranslation({
-    onTranslateSuccess: (logItem) => {
-      onAddHistory(logItem);
+    onTranslateSuccess: (logItem, isBackground) => {
+      if (!isBackground) {
+        onAddHistory(logItem);
+      }
       // Add languages to recents list
       onAddRecent(sourceLang);
       onAddRecent(targetLang);
@@ -153,11 +155,30 @@ export default function Translator({
     }
   };
 
+  const handleBlur = () => {
+    if (inputText.trim() && translatedText) {
+      onAddHistory({
+        originalText: inputText.trim(),
+        translatedText,
+        sourceLang: sourceLang === 'auto' && detectedLang ? `auto (${detectedLang})` : sourceLang,
+        targetLang,
+        timestamp: Date.now()
+      });
+    }
+  };
+
   const handleCopy = async () => {
     if (!translatedText) return;
     const success = await copyToClipboard(translatedText);
     if (success) {
       onShowToast("Copied to clipboard!", "success");
+      onAddHistory({
+        originalText: inputText.trim(),
+        translatedText,
+        sourceLang: sourceLang === 'auto' && detectedLang ? `auto (${detectedLang})` : sourceLang,
+        targetLang,
+        timestamp: Date.now()
+      });
     } else {
       onShowToast("Failed to copy.", "error");
     }
@@ -167,6 +188,13 @@ export default function Translator({
     if (!translatedText) return;
     downloadAsTxt(translatedText, `translation_${targetLang}.txt`);
     onShowToast("Downloaded as TXT file.", "success");
+    onAddHistory({
+      originalText: inputText.trim(),
+      translatedText,
+      sourceLang: sourceLang === 'auto' && detectedLang ? `auto (${detectedLang})` : sourceLang,
+      targetLang,
+      timestamp: Date.now()
+    });
   };
 
   const handleShare = async () => {
@@ -186,6 +214,13 @@ export default function Translator({
         await copyToClipboard(`${shareData.text}\nShared via GlobalSpeak`);
         onShowToast("Template copied to clipboard for sharing!", "info");
       }
+      onAddHistory({
+        originalText: inputText.trim(),
+        translatedText,
+        sourceLang: sourceLang === 'auto' && detectedLang ? `auto (${detectedLang})` : sourceLang,
+        targetLang,
+        timestamp: Date.now()
+      });
     } catch (err) {
       if (err.name !== 'AbortError') {
         onShowToast("Unable to trigger system sharing.", "error");
@@ -278,6 +313,7 @@ export default function Translator({
               value={inputText}
               onChange={(e) => setInputText(e.target.value.slice(0, charLimit))}
               onKeyDown={handleKeyDown}
+              onBlur={handleBlur}
               placeholder="Enter text to translate... (Press Esc to clear, Ctrl+Enter to translate)"
               className="w-full flex-grow bg-transparent text-slate-100 placeholder-slate-500 text-sm md:text-base border-none outline-none resize-none focus:ring-0 font-sans leading-relaxed min-h-[180px] p-0"
               maxLength={charLimit}

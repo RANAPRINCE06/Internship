@@ -32,6 +32,30 @@ export default function App() {
 
   const handleAddHistory = (item) => {
     setHistory((prevHistory) => {
+      const now = Date.now();
+      const timeThreshold = 12000; // 12-second window for updating the same session item
+      
+      if (prevHistory.length > 0) {
+        const lastItem = prevHistory[0];
+        const lastTime = parseInt(lastItem.id.split('-')[0]) || lastItem.timestamp || 0;
+        
+        const isSameSession = (now - lastTime) < timeThreshold;
+        const isSameLangs = lastItem.sourceLang === item.sourceLang && lastItem.targetLang === item.targetLang;
+        
+        // If the same phrase is modified slightly or a duplicate action occurs within 12s, update it in-place
+        if (isSameSession && isSameLangs) {
+          const updatedHistory = [...prevHistory];
+          updatedHistory[0] = {
+            ...lastItem,
+            originalText: item.originalText,
+            translatedText: item.translatedText,
+            timestamp: now,
+            id: `${now}-${lastItem.id.split('-')[1] || Math.random().toString(36).substr(2, 9)}`
+          };
+          return updatedHistory;
+        }
+      }
+
       // De-duplicate previous logs to prevent clutter
       const filtered = prevHistory.filter(
         (h) => !(h.originalText.toLowerCase() === item.originalText.toLowerCase() && 
@@ -39,7 +63,7 @@ export default function App() {
       );
       
       const newHistory = [
-        { ...item, id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}` },
+        { ...item, id: `${now}-${Math.random().toString(36).substr(2, 9)}` },
         ...filtered
       ];
       

@@ -24,7 +24,7 @@ export default function useTranslation({ onTranslateSuccess, onTranslateError } 
 
   // Core translate runner
   const translate = useCallback(
-    async (textToTranslate = inputText, sLang = sourceLang, tLang = targetLang) => {
+    async (textToTranslate = inputText, sLang = sourceLang, tLang = targetLang, isBackground = false) => {
       const trimmed = textToTranslate.trim();
       if (!trimmed) {
         setTranslatedText('');
@@ -52,7 +52,7 @@ export default function useTranslation({ onTranslateSuccess, onTranslateError } 
             sourceLang: sLang === 'auto' && result.detectedSourceLanguage ? `auto (${result.detectedSourceLanguage})` : sLang,
             targetLang: tLang,
             timestamp: Date.now()
-          });
+          }, isBackground);
         }
       } catch (err) {
         const errMsg = err.message || "Failed to communicate with translation service.";
@@ -84,7 +84,7 @@ export default function useTranslation({ onTranslateSuccess, onTranslateError } 
     }
 
     debounceTimerRef.current = setTimeout(() => {
-      translate();
+      translate(inputText, sourceLang, targetLang, true);
     }, 1300); // Increased typing debounce to 1.3 seconds to respect rate limits
 
     return () => {
