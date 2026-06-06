@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -17,7 +17,17 @@ export default function App() {
   const [history, setHistory] = useLocalStorage('globalspeak-history', []);
   const [favorites, setFavorites] = useLocalStorage('globalspeak-favorites', ['hi', 'es', 'fr', 'ja']);
   const [recentLangs, setRecentLangs] = useLocalStorage('globalspeak-recents', ['en', 'es', 'hi']);
-  
+
+  // Dark / Light mode — persisted in localStorage
+  const [darkMode, setDarkMode] = useLocalStorage('globalspeak-darkmode', false);
+
+  // Sync <html> class for future global CSS hooks
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', darkMode);
+  }, [darkMode]);
+
+  const handleToggleTheme = () => setDarkMode((prev) => !prev);
+
   // Analytics statistics
   const [stats, setStats] = useLocalStorage('globalspeak-stats', {
     totalTranslations: 0,
@@ -84,7 +94,9 @@ export default function App() {
 
   const handleClearAllHistory = () => {
     setHistory([]);
+    setStats({ totalTranslations: 0, totalWords: 0 });
   };
+
 
   const handleToggleFavorite = (langCode) => {
     setFavorites((prevFavorites) => {
@@ -124,29 +136,37 @@ export default function App() {
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
-      className="min-h-screen flex flex-col relative overflow-hidden bg-slate-950 text-slate-100 transition-colors duration-300"
+      className={`min-h-screen flex flex-col relative overflow-hidden transition-colors duration-300 ${
+        darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'
+      }`}
     >
-      
-      {/* Blurred neon styling backdrops */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-sky-500/5 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-500/5 rounded-full blur-[120px] pointer-events-none" />
+
+      {/* Blurred styling backdrops */}
+      <div className={`absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full blur-[120px] pointer-events-none ${
+        darkMode ? 'bg-sky-500/5' : 'bg-sky-500/8'
+      }`} />
+      <div className={`absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full blur-[120px] pointer-events-none ${
+        darkMode ? 'bg-indigo-500/5' : 'bg-indigo-500/8'
+      }`} />
 
       {/* 3D Constellation Particle Background */}
       <ThreeDBackground />
 
-      {/* Header (No theme switch panel) */}
-      <Header isDemo={isDemoMode} />
+      {/* Header with logo + theme toggle */}
+      <Header isDemo={isDemoMode} darkMode={darkMode} onToggleTheme={handleToggleTheme} />
 
       {/* Main Grid */}
       <main className="flex-grow w-full max-w-6xl mx-auto px-4 py-8 md:py-12 space-y-12 z-10">
-        
+
         {/* Entrance Heading details */}
         <section className="space-y-4">
           <div className="text-center max-w-2xl mx-auto space-y-2 mb-8">
-            <h2 className="font-display font-extrabold text-3xl md:text-4xl text-white tracking-tight m-0 bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent select-none">
+            <h2 className={`font-display font-extrabold text-3xl md:text-4xl tracking-tight m-0 bg-clip-text text-transparent select-none bg-gradient-to-r ${
+              darkMode ? 'from-white to-slate-400' : 'from-slate-900 to-slate-600'
+            }`}>
               Translate smarter with GlobalSpeak
             </h2>
-            <p className="text-sm text-slate-400 font-medium">
+            <p className={`text-sm font-medium ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
               Seamlessly bridge language barriers with our premium neural text translator.
             </p>
           </div>
@@ -163,36 +183,69 @@ export default function App() {
 
         {/* Live Statistics metrics dashboard */}
         <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          
-          <div className="glass-panel rounded-2xl p-4 flex items-center gap-3.5 border border-slate-800/40 bg-slate-900/10">
-            <div className="w-10 h-10 rounded-xl bg-sky-500/10 text-sky-400 flex items-center justify-center flex-shrink-0">
+
+          <motion.div
+            whileHover={{ y: -6, scale: 1.03, boxShadow: '0 16px 40px -12px rgba(14,165,233,0.22)' }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ type: 'spring', stiffness: 340, damping: 22 }}
+            className={`glass-panel rounded-2xl p-4 flex items-center gap-3.5 border cursor-default ${
+              darkMode ? 'border-slate-700/50 bg-slate-800/50' : 'border-slate-200/50 bg-white/40'
+            }`}
+          >
+            <motion.div
+              whileHover={{ rotate: 360 }}
+              transition={{ duration: 0.5, ease: 'easeInOut' }}
+              className="w-10 h-10 rounded-xl bg-sky-500/10 text-sky-500 flex items-center justify-center flex-shrink-0"
+            >
               <FiCheckCircle className="w-5 h-5" />
-            </div>
+            </motion.div>
             <div>
-              <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider select-none">Translations</div>
-              <div className="text-lg font-bold text-slate-200">{stats.totalTranslations}</div>
+              <div className={`text-[10px] uppercase font-bold tracking-wider select-none ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Translations</div>
+              <div className={`text-lg font-bold ${darkMode ? 'text-slate-100' : 'text-slate-800'}`}>{stats.totalTranslations}</div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="glass-panel rounded-2xl p-4 flex items-center gap-3.5 border border-slate-800/40 bg-slate-900/10">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center flex-shrink-0">
+          <motion.div
+            whileHover={{ y: -6, scale: 1.03, boxShadow: '0 16px 40px -12px rgba(16,185,129,0.22)' }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ type: 'spring', stiffness: 340, damping: 22 }}
+            className={`glass-panel rounded-2xl p-4 flex items-center gap-3.5 border cursor-default ${
+              darkMode ? 'border-slate-700/50 bg-slate-800/50' : 'border-slate-200/50 bg-white/40'
+            }`}
+          >
+            <motion.div
+              whileHover={{ rotate: 360 }}
+              transition={{ duration: 0.5, ease: 'easeInOut' }}
+              className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center flex-shrink-0"
+            >
               <FiTrendingUp className="w-5 h-5" />
-            </div>
+            </motion.div>
             <div>
-              <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider select-none">Words Parsed</div>
-              <div className="text-lg font-bold text-slate-200">{stats.totalWords}</div>
+              <div className={`text-[10px] uppercase font-bold tracking-wider select-none ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Words Parsed</div>
+              <div className={`text-lg font-bold ${darkMode ? 'text-slate-100' : 'text-slate-800'}`}>{stats.totalWords}</div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="glass-panel rounded-2xl p-4 flex items-center gap-3.5 border border-slate-800/40 bg-slate-900/10">
-            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center flex-shrink-0">
+          <motion.div
+            whileHover={{ y: -6, scale: 1.03, boxShadow: '0 16px 40px -12px rgba(99,102,241,0.22)' }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ type: 'spring', stiffness: 340, damping: 22 }}
+            className={`glass-panel rounded-2xl p-4 flex items-center gap-3.5 border cursor-default ${
+              darkMode ? 'border-slate-700/50 bg-slate-800/50' : 'border-slate-200/50 bg-white/40'
+            }`}
+          >
+            <motion.div
+              whileHover={{ rotate: 360 }}
+              transition={{ duration: 0.5, ease: 'easeInOut' }}
+              className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center flex-shrink-0"
+            >
               <FiGlobe className="w-5 h-5" />
-            </div>
+            </motion.div>
             <div>
-              <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider select-none">Saved Favorites</div>
-              <div className="text-lg font-bold text-slate-200">{favorites.length}</div>
+              <div className={`text-[10px] uppercase font-bold tracking-wider select-none ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Saved Favorites</div>
+              <div className={`text-lg font-bold ${darkMode ? 'text-slate-100' : 'text-slate-800'}`}>{favorites.length}</div>
             </div>
-          </div>
+          </motion.div>
 
         </section>
 

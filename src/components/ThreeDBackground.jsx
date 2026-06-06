@@ -107,7 +107,7 @@ export default function ThreeDBackground() {
           chars: Array.from({ length: Math.floor(Math.random() * 8) + 10 }, () => 
             charSet[Math.floor(Math.random() * charSet.length)]
           ),
-          opacity: Math.random() * 0.14 + 0.06
+          opacity: Math.random() * 0.28 + 0.14
         });
       }
     };
@@ -219,13 +219,13 @@ export default function ThreeDBackground() {
       const glow2Y = height / 2 + Math.sin(timeMs * 0.0004) * height * 0.3;
 
       const grad1 = ctx.createRadialGradient(glow1X, glow1Y, 50, glow1X, glow1Y, Math.max(width, height) * 0.55);
-      grad1.addColorStop(0, 'rgba(14, 165, 233, 0.045)');
+      grad1.addColorStop(0, 'rgba(14, 165, 233, 0.13)');
       grad1.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.fillStyle = grad1;
       ctx.fillRect(0, 0, width, height);
 
       const grad2 = ctx.createRadialGradient(glow2X, glow2Y, 50, glow2X, glow2Y, Math.max(width, height) * 0.55);
-      grad2.addColorStop(0, 'rgba(99, 102, 241, 0.045)');
+      grad2.addColorStop(0, 'rgba(99, 102, 241, 0.13)');
       grad2.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.fillStyle = grad2;
       ctx.fillRect(0, 0, width, height);
@@ -256,7 +256,7 @@ export default function ThreeDBackground() {
 
         ctx.beginPath();
         ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(226, 232, 240, ${star.alpha * 0.35})`;
+        ctx.fillStyle = `rgba(71, 85, 105, ${star.alpha * 0.55})`; // slate stardust
         ctx.fill();
       }
 
@@ -276,14 +276,14 @@ export default function ThreeDBackground() {
           if (charY > 0 && charY < height) {
             const isLeader = k === s.chars.length - 1;
             const alpha = isLeader 
-              ? s.opacity * 2.8 
-              : s.opacity * (1 - (s.chars.length - k) / s.chars.length);
+              ? s.opacity * 4.5 
+              : s.opacity * (1 - (s.chars.length - k) / s.chars.length) * 1.8;
             
             ctx.save();
-            ctx.font = isLeader ? 'bold 13px monospace' : '11px monospace';
+            ctx.font = isLeader ? 'bold 14px monospace' : '12px monospace';
             ctx.fillStyle = isLeader
-              ? `rgba(56, 189, 248, ${alpha})`
-              : `rgba(99, 102, 241, ${alpha * 0.8})`;
+              ? `rgba(2, 132, 199, ${alpha * 1.4})` // sky-600 leader
+              : `rgba(79, 70, 229, ${alpha * 1.2})`; // indigo-600 body
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(s.chars[k], s.x, charY);
@@ -320,10 +320,10 @@ export default function ThreeDBackground() {
           ctx.rotate(g.angle);
           
           const normalizedZ = (g.z + 150) / 650;
-          const opacity = Math.max(0.04, Math.min(0.22, (1 - normalizedZ) * 0.22)) * scale;
+          const opacity = Math.max(0.1, Math.min(0.55, (1 - normalizedZ) * 0.55)) * scale;
           
           ctx.font = `semibold ${g.baseFontSize * scale}px system-ui, -apple-system, sans-serif`;
-          ctx.fillStyle = `rgba(148, 163, 184, ${opacity})`;
+          ctx.fillStyle = `rgba(51, 65, 85, ${opacity * 2.0})`; // slate-700 glyphs
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillText(g.char, 0, 0);
@@ -396,17 +396,17 @@ export default function ThreeDBackground() {
           const maxDist = sphereRadius * 0.42;
 
           if (dist < maxDist) {
-            const alpha = (1 - dist / maxDist) * 0.08 * Math.min(p1.scale, p2.scale);
+            const alpha = (1 - dist / maxDist) * 0.22 * Math.min(p1.scale, p2.scale);
             ctx.beginPath();
             ctx.moveTo(p1.x, p1.y);
             ctx.lineTo(p2.x, p2.y);
 
             if (p1.colorType === 'sky' && p2.colorType === 'sky') {
-              ctx.strokeStyle = `rgba(56, 189, 248, ${alpha})`;
+              ctx.strokeStyle = `rgba(2, 132, 199, ${alpha * 1.8})`; // sky-600
             } else if (p1.colorType === 'indigo' && p2.colorType === 'indigo') {
-              ctx.strokeStyle = `rgba(129, 140, 248, ${alpha})`;
+              ctx.strokeStyle = `rgba(79, 70, 229, ${alpha * 1.8})`; // indigo-600
             } else {
-              ctx.strokeStyle = `rgba(167, 139, 250, ${alpha})`;
+              ctx.strokeStyle = `rgba(124, 58, 237, ${alpha * 1.8})`; // purple-600
             }
             ctx.stroke();
 
@@ -422,7 +422,7 @@ export default function ThreeDBackground() {
 
               ctx.beginPath();
               ctx.arc(pulseX, pulseY, 1.45 * pulseScale, 0, Math.PI * 2);
-              ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 2.8})`;
+              ctx.fillStyle = `rgba(14, 165, 233, ${alpha * 3})`; // sky-500 light pulse
               ctx.fill();
             }
           }
@@ -433,7 +433,7 @@ export default function ThreeDBackground() {
       for (let i = 0; i < projected.length; i++) {
         const p = projected[i];
         const normalizedZ = (p.z + sphereRadius) / (sphereRadius * 2);
-        const opacity = Math.max(0.06, Math.min(0.82, (1 - normalizedZ) * 0.75));
+        const opacity = Math.max(0.15, Math.min(0.95, (1 - normalizedZ) * 0.95));
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
@@ -473,8 +473,8 @@ export default function ThreeDBackground() {
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-45 transition-opacity duration-1000"
-      style={{ mixBlendMode: 'screen' }}
+      className="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-75 transition-opacity duration-1000"
+      style={{ mixBlendMode: 'normal' }}
     />
   );
 }

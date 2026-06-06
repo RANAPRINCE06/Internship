@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { motion, LayoutGroup } from 'framer-motion';
 import { 
   FiTrash2, FiCopy, FiDownload, FiShare2, FiRepeat, 
-  FiMic, FiMicOff, FiAlertCircle, FiCheck, FiSliders, FiHelpCircle
+  FiMic, FiMicOff, FiAlertCircle, FiHelpCircle
 } from 'react-icons/fi';
 import { HiSparkles } from 'react-icons/hi';
 import LanguageSelector from './LanguageSelector';
@@ -25,6 +26,9 @@ export default function Translator({
   onShowToast
 }) {
   const [isListening, setIsListening] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const [swapped, setSwapped] = useState(false);
+  const [swapRotation, setSwapRotation] = useState(0);
   const recognitionRef = useRef(null);
   const textareaRef = useRef(null);
 
@@ -229,6 +233,8 @@ export default function Translator({
   };
 
   const handleSwap = () => {
+    setSwapped(prev => !prev);
+    setSwapRotation(prev => prev + 180);
     swap(onShowToast);
   };
 
@@ -255,8 +261,8 @@ export default function Translator({
       
       {/* Workspace Configuration Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 px-1">
-        <div className="flex items-center gap-1.5 text-xs text-slate-400">
-          <HiSparkles className="w-3.5 h-3.5 text-sky-400 animate-pulse" />
+        <div className="flex items-center gap-1.5 text-xs text-slate-500">
+          <HiSparkles className="w-3.5 h-3.5 text-sky-500 animate-pulse" />
           <span>Interactive Translation Workbench</span>
         </div>
         
@@ -264,14 +270,14 @@ export default function Translator({
         <div className="flex items-center gap-4">
           {/* Keyboard Shortcut Icon with tooltip */}
           <div 
-            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-455 transition-colors cursor-help select-none"
+            className="flex items-center gap-1.5 text-xs text-slate-550 hover:text-slate-700 transition-colors cursor-help select-none"
             title="Shortcuts:\n- Ctrl+Enter: Force translate\n- Esc: Clear workspace"
           >
             <FiHelpCircle className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Shortcuts</span>
           </div>
 
-          <span className="text-slate-800">|</span>
+          <span className="text-slate-300">|</span>
 
           {/* Instant translation switcher */}
           <label className="relative inline-flex items-center cursor-pointer select-none">
@@ -282,8 +288,8 @@ export default function Translator({
               className="sr-only peer" 
               aria-label="Toggle instant translation"
             />
-            <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-900 after:border-slate-700 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sky-500"></div>
-            <span className="ml-2 text-xs font-semibold text-slate-400">
+            <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sky-500"></div>
+            <span className="ml-2 text-xs font-semibold text-slate-500">
               Instant
             </span>
           </label>
@@ -291,10 +297,23 @@ export default function Translator({
       </div>
 
       {/* Workspace Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch relative">
-        
+      <LayoutGroup id="translator-layout">
+      <div className="flex flex-col lg:flex-row gap-6 items-stretch relative">
+
         {/* Source Box */}
-        <div className="glass-panel rounded-3xl flex flex-col p-5 md:p-6 transition-all duration-300 relative border border-slate-800/40">
+        <motion.div
+          layout
+          layoutId="source-panel"
+          style={{ order: swapped ? 3 : 1, flex: '1 1 0%' }}
+          initial={{ opacity: 0, x: -40 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1], layout: { type: 'spring', stiffness: 300, damping: 30 } }}
+          className={`glass-panel rounded-3xl flex flex-col p-5 md:p-6 transition-colors duration-300 relative border ${
+            isFocused
+              ? 'border-sky-400/60 shadow-[0_0_0_3px_rgba(14,165,233,0.12),0_8px_32px_-8px_rgba(14,165,233,0.18)]'
+              : 'border-slate-200/50'
+          }`}
+        >
           
           <div className="mb-4">
             <LanguageSelector
@@ -315,16 +334,18 @@ export default function Translator({
               onKeyDown={handleKeyDown}
               onBlur={handleBlur}
               placeholder="Enter text to translate... (Press Esc to clear, Ctrl+Enter to translate)"
-              className="w-full flex-grow bg-transparent text-slate-100 placeholder-slate-500 text-sm md:text-base border-none outline-none resize-none focus:ring-0 font-sans leading-relaxed min-h-[180px] p-0"
+              className="w-full flex-grow bg-transparent text-slate-800 placeholder-slate-400 text-sm md:text-base border-none outline-none resize-none focus:ring-0 font-sans leading-relaxed min-h-[180px] p-0"
               maxLength={charLimit}
               aria-label="Source Text Input"
               id="source-textarea"
+              onFocus={() => setIsFocused(true)}
+              onBlur={(e) => { setIsFocused(false); handleBlur(e); }}
             />
 
             {isListening && (
-              <div className="absolute inset-0 bg-sky-500/5 rounded-2xl flex items-center justify-center border border-dashed border-sky-500/30 animate-pulse pointer-events-none">
-                <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-sky-500/10 text-sky-400 text-xs font-semibold">
-                  <span className="w-2 h-2 rounded-full bg-sky-455 animate-ping"></span>
+              <div className="absolute inset-0 bg-sky-500/5 rounded-2xl flex items-center justify-center border border-dashed border-sky-550/30 animate-pulse pointer-events-none">
+                <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-sky-500/10 text-sky-500 text-xs font-semibold">
+                  <span className="w-2 h-2 rounded-full bg-sky-500 animate-ping"></span>
                   Mic Active... Speak Now
                 </div>
               </div>
@@ -332,7 +353,7 @@ export default function Translator({
           </div>
 
           {/* Source Box Footer Toolbar */}
-          <div className="flex items-center justify-between border-t border-slate-800/30 pt-4 mt-4 text-slate-400">
+          <div className="flex items-center justify-between border-t border-slate-200/50 pt-4 mt-4 text-slate-500">
             
             <div className="flex items-center gap-2">
               <button
@@ -341,7 +362,7 @@ export default function Translator({
                 className={`p-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-sky-500/20 ${
                   isListening
                     ? 'bg-rose-600 text-white shadow-md shadow-rose-600/20 hover:bg-rose-500'
-                    : 'bg-slate-800 hover:bg-slate-750 text-slate-350'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
                 }`}
                 title={isListening ? "Deactivate voice search" : "Speak to translate"}
                 id="mic-btn"
@@ -354,7 +375,7 @@ export default function Translator({
                 type="button"
                 onClick={handleClear}
                 disabled={!inputText}
-                className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-750 disabled:opacity-30 disabled:cursor-not-allowed text-slate-350 transition-all cursor-pointer flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed text-slate-600 transition-all cursor-pointer flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-sky-500/20"
                 title="Clear input"
                 id="clear-btn"
                 aria-label="Clear source text input"
@@ -367,13 +388,13 @@ export default function Translator({
             <div className="flex items-center gap-4 text-xs font-semibold text-slate-500">
               <span>{wordCount} words</span>
               <div className="flex items-center gap-1.5">
-                <span className={inputText.length >= charLimit - 100 ? 'text-amber-500 font-bold animate-pulse' : ''}>
+                <span className={inputText.length >= charLimit - 100 ? 'text-amber-600 font-bold animate-pulse' : ''}>
                   {inputText.length}
                 </span>
                 <span>/</span>
                 <span>{charLimit}</span>
                 {/* Radial visual indicator */}
-                <div className="w-4 h-4 rounded-full border border-slate-800 relative overflow-hidden flex items-center justify-center">
+                <div className="w-4 h-4 rounded-full border border-slate-200 relative overflow-hidden flex items-center justify-center">
                   <div 
                     className="absolute inset-0 bg-sky-500/20 transition-all duration-300"
                     style={{ height: `${charPercent}%` }}
@@ -384,23 +405,44 @@ export default function Translator({
 
           </div>
 
-        </div>
+        </motion.div>
 
         {/* Floating Switch Button in between */}
-        <div className="flex items-center justify-center py-2 lg:py-0 lg:absolute lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:z-10">
+        <motion.div
+          layout
+          style={{ order: 2, alignSelf: 'center' }}
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.3, duration: 0.4, type: 'spring', stiffness: 260, damping: 18, layout: { type: 'spring', stiffness: 300, damping: 30 } }}
+          className="flex items-center justify-center py-2 lg:py-0"
+        >
           <button
             type="button"
             onClick={handleSwap}
-            className="p-3.5 rounded-full border border-slate-800 bg-slate-900 text-slate-300 shadow-lg hover:shadow-sky-500/5 hover:bg-slate-800 hover:scale-110 active:scale-95 transition-all duration-300 hover:rotate-185 cursor-pointer flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-sky-500"
+            className="p-3.5 rounded-full border border-slate-200 bg-white text-slate-700 shadow-md hover:bg-slate-50 hover:scale-110 active:scale-95 transition-all duration-300 cursor-pointer flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-sky-500"
             title="Swap translation directions"
             aria-label="Swap source and target languages"
           >
-            <FiRepeat className="w-4 h-4 text-sky-400" />
+            <motion.span
+              animate={{ rotate: swapRotation }}
+              transition={{ duration: 0.45, ease: [0.34, 1.56, 0.64, 1] }}
+              style={{ display: 'flex' }}
+            >
+              <FiRepeat className="w-4 h-4 text-sky-500" />
+            </motion.span>
           </button>
-        </div>
+        </motion.div>
 
         {/* Target Box */}
-        <div className="glass-panel rounded-3xl flex flex-col p-5 md:p-6 transition-all duration-300 border border-slate-800/40 relative">
+        <motion.div
+          layout
+          layoutId="target-panel"
+          style={{ order: swapped ? 1 : 3, flex: '1 1 0%' }}
+          initial={{ opacity: 0, x: 40 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.55, delay: 0.1, ease: [0.16, 1, 0.3, 1], layout: { type: 'spring', stiffness: 300, damping: 30 } }}
+          className="glass-panel rounded-3xl flex flex-col p-5 md:p-6 transition-colors duration-300 border border-slate-200/50 relative"
+        >
           
           <div className="mb-4">
             <LanguageSelector
@@ -420,22 +462,28 @@ export default function Translator({
             ) : error ? (
               <div className="flex flex-col items-center justify-center p-6 space-y-3 h-full min-h-[180px] text-center">
                 <FiAlertCircle className="w-10 h-10 text-rose-500/80" />
-                <p className="text-xs md:text-sm font-semibold text-rose-400 break-words max-w-sm">
+                <p className="text-xs md:text-sm font-semibold text-rose-550 break-words max-w-sm">
                   {error}
                 </p>
                 <button
                   onClick={() => translate()}
-                  className="px-4 py-2 rounded-xl bg-rose-500/10 text-rose-455 border border-rose-500/15 hover:bg-rose-500/20 transition-all text-xs font-semibold cursor-pointer focus:outline-none"
+                  className="px-4 py-2 rounded-xl bg-rose-500/10 text-rose-600 border border-rose-500/15 hover:bg-rose-500/20 transition-all text-xs font-semibold cursor-pointer focus:outline-none"
                   aria-label="Retry translation"
                 >
                   Retry Translation
                 </button>
               </div>
             ) : (
-              <div className="relative flex-grow flex flex-col justify-between">
+              <motion.div
+                key={translatedText}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, ease: 'easeOut' }}
+                className="relative flex-grow flex flex-col justify-between"
+              >
                 <div 
-                  className={`w-full flex-grow text-slate-100 text-sm md:text-base whitespace-pre-wrap leading-relaxed break-words font-sans min-h-[180px] select-text pb-6 ${
-                    !translatedText ? 'text-slate-600 italic select-none' : ''
+                  className={`w-full flex-grow text-slate-800 text-sm md:text-base whitespace-pre-wrap leading-relaxed break-words font-sans min-h-[180px] select-text pb-6 ${
+                    !translatedText ? 'text-slate-400 italic select-none' : ''
                   }`}
                   aria-label="Translated Text Output"
                   id="translated-view"
@@ -446,9 +494,9 @@ export default function Translator({
                 {/* Auto detected lang tag metadata */}
                 {detectedLang && (
                   <div className="absolute bottom-2 left-0 flex items-center gap-1 text-[11px] text-slate-500 font-medium select-none">
-                    <HiSparkles className="w-3.5 h-3.5 text-sky-400" />
+                    <HiSparkles className="w-3.5 h-3.5 text-sky-500" />
                     <span>Auto-detected:</span>
-                    <span className="font-semibold text-slate-400">
+                    <span className="font-semibold text-slate-650">
                       {getLanguageName(detectedLang)}
                     </span>
                     {confidence && (
@@ -458,12 +506,12 @@ export default function Translator({
                     )}
                   </div>
                 )}
-              </div>
+              </motion.div>
             )}
           </div>
 
           {/* Action Toolbar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-t border-slate-800/30 pt-4 mt-4 gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-t border-slate-200/50 pt-4 mt-4 gap-4">
             
             <SpeechControls 
               text={translatedText} 
@@ -475,7 +523,7 @@ export default function Translator({
                 type="button"
                 onClick={handleCopy}
                 disabled={!translatedText}
-                className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-750 disabled:opacity-30 disabled:cursor-not-allowed text-slate-350 transition-all cursor-pointer flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed text-slate-600 transition-all cursor-pointer flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-sky-500/20"
                 title="Copy to clipboard"
                 aria-label="Copy translation output to clipboard"
               >
@@ -486,7 +534,7 @@ export default function Translator({
                 type="button"
                 onClick={handleDownload}
                 disabled={!translatedText}
-                className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-750 disabled:opacity-30 disabled:cursor-not-allowed text-slate-350 transition-all cursor-pointer flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed text-slate-600 transition-all cursor-pointer flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-sky-500/20"
                 title="Download text file (.txt)"
                 aria-label="Download translation output as text file"
               >
@@ -497,7 +545,7 @@ export default function Translator({
                 type="button"
                 onClick={handleShare}
                 disabled={!translatedText}
-                className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-750 disabled:opacity-30 disabled:cursor-not-allowed text-slate-350 transition-all cursor-pointer flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed text-slate-600 transition-all cursor-pointer flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-sky-500/20"
                 title="Share translation"
                 aria-label="Open system sharing options"
               >
@@ -507,9 +555,10 @@ export default function Translator({
 
           </div>
 
-        </div>
+        </motion.div>
 
       </div>
+      </LayoutGroup>
 
       {/* Manual Action Button (when Instant translation is off) */}
       {!isInstant && inputText.trim() !== '' && (

@@ -119,7 +119,7 @@ export default function SpeechControls({ text, langCode }) {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-3 p-2 rounded-xl border border-slate-800 bg-slate-900/40 w-full md:w-auto">
+    <div className="flex flex-wrap items-center gap-3 p-2 rounded-xl border border-slate-200 bg-white/80 w-full md:w-auto">
       <div className="flex items-center gap-1.5">
         <span className="text-[10px] uppercase font-bold text-slate-500 px-1 select-none">
           TTS
@@ -173,10 +173,10 @@ export default function SpeechControls({ text, langCode }) {
               setSelectedVoice(voice);
               if (isPlaying) handleStop();
             }}
-            className="w-full pl-2.5 pr-8 py-1.5 rounded-lg border border-slate-800 bg-slate-950 text-slate-350 text-[11px] font-medium focus:ring-1 focus:ring-sky-500 focus:outline-none transition-all cursor-pointer appearance-none truncate"
+            className="w-full pl-2.5 pr-8 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 text-[11px] font-medium focus:ring-1 focus:ring-sky-500 focus:outline-none transition-all cursor-pointer appearance-none truncate"
           >
             {voices.map((v) => (
-              <option key={v.name} value={v.name} className="bg-slate-950 text-slate-300">
+              <option key={v.name} value={v.name} className="bg-white text-slate-700">
                 {v.name} ({v.lang})
               </option>
             ))}
